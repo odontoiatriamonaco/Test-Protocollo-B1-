@@ -146,6 +146,97 @@
     </div>
 </div>
 
+<!-- IMPORT REPORT REALGUIDE OVERLAY -->
+<div id="import-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:10000; justify-content:center; align-items:center;">
+    <div style="background:white; border-radius:12px; max-width:95%; max-height:95%; overflow:auto; box-shadow:0 10px 40px rgba(0,0,0,0.3);">
+        <div style="background:linear-gradient(135deg, #0056b3, #007acc); color:white; padding:15px 20px; border-radius:12px 12px 0 0; display:flex; justify-content:space-between; align-items:center;">
+            <h2 style="margin:0; font-size:18px;">📄 IMPORTA REPORT IMPLANTARE (funzione beta)</h2>
+            <button onclick="chiudiImportOverlay()" style="background:#ff5252; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:bold;">✕ Chiudi</button>
+        </div>
+        
+        <div id="import-step1" style="padding:20px; text-align:center;">
+            <p style="color:#555; margin-bottom:20px;">Seleziona il file PDF del Report Implantare generato da RealGuide</p>
+            <input type="file" id="pdfFileInput" accept=".pdf" style="display:none" onchange="processaPDFReport(event)">
+            <button onclick="document.getElementById('pdfFileInput').click()" style="background:linear-gradient(to bottom, #4CAF50, #388E3C); color:white; padding:15px 30px; border:none; border-radius:8px; font-size:16px; cursor:pointer; border-bottom:3px solid #1B5E20;">
+                📂 Seleziona PDF Report
+            </button>
+            <div id="import-loading" style="display:none; margin-top:20px;">
+                <div style="border:4px solid #f3f3f3; border-top:4px solid #0056b3; border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite; margin:0 auto;"></div>
+                <p style="color:#666; margin-top:10px;">Analisi del report in corso...</p>
+            </div>
+        </div>
+        
+        <div id="import-step2" style="display:none; padding:20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h3 style="margin:0; color:#333;">📋 Anteprima Dati Estratti</h3>
+                <button onclick="mostraTestoOCR()" style="background:#ff9800; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:12px;">👁️ Mostra Testo Raw</button>
+            </div>
+            
+            <div style="background:#f5f5f5; padding:10px 15px; border-radius:6px; margin-bottom:15px;">
+                <label style="font-weight:bold; color:#555;">Paziente:</label>
+                <input type="text" id="import-paziente" style="width:100%; padding:8px; margin-top:5px; border:1px solid #ddd; border-radius:4px; font-size:14px;">
+            </div>
+            
+            <div style="overflow-x:auto;">
+                <table id="import-table" style="width:100%; border-collapse:collapse; font-size:13px;">
+                    <thead>
+                        <tr style="background:#0056b3; color:white;">
+                            <th style="padding:10px; border:1px solid #ddd;">Dente</th>
+                            <th style="padding:10px; border:1px solid #ddd;">Tipo</th>
+                            <th style="padding:10px; border:1px solid #ddd;">Diametro</th>
+                            <th style="padding:10px; border:1px solid #ddd;">Lunghezza</th>
+                            <th style="padding:10px; border:1px solid #ddd;">Densità HU</th>
+                            <th style="padding:10px; border:1px solid #ddd;">Carico Imm.</th>
+                            <th style="padding:10px; border:1px solid #ddd;">Post-Estr.</th>
+                            <th style="padding:10px; border:1px solid #ddd;">Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody id="import-tbody"></tbody>
+                </table>
+            </div>
+            
+            <div style="margin-top:20px; text-align:center; display:flex; gap:10px; justify-content:center;">
+                <button onclick="aggiungiRigaImport()" style="background:#2196F3; color:white; border:none; padding:10px 20px; border-radius:6px; cursor:pointer;">➕ Aggiungi Impianto</button>
+                <button onclick="confermaImportazione()" style="background:linear-gradient(to bottom, #4CAF50, #388E3C); color:white; border:none; padding:10px 30px; border-radius:6px; cursor:pointer; font-weight:bold; border-bottom:3px solid #1B5E20;">✅ Conferma e Inserisci</button>
+                <button onclick="chiudiImportOverlay()" style="background:#f44336; color:white; border:none; padding:10px 20px; border-radius:6px; cursor:pointer;">❌ Annulla</button>
+            </div>
+        </div>
+        
+        <div id="import-ocr-raw" style="display:none; padding:20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h3 style="margin:0; color:#333;">📝 Testo Estratto dal PDF</h3>
+                <button onclick="nascondiTestoOCR()" style="background:#666; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">← Torna alla Griglia</button>
+            </div>
+            <textarea id="ocr-text-area" style="width:100%; height:300px; font-family:monospace; font-size:12px; padding:10px; border:1px solid #ddd; border-radius:4px;" readonly></textarea>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+#import-table input, #import-table select {
+    width: 100%;
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    box-sizing: border-box;
+}
+#import-table input[type="checkbox"] {
+    width: auto;
+}
+#import-table td {
+    padding: 8px;
+    border: 1px solid #ddd;
+    vertical-align: middle;
+}
+#import-table tr:nth-child(even) {
+    background: #f9f9f9;
+}
+</style>
+
 <header>
   <h1>PROTOCOLLO B1ONE</h1>
   <p>Ideato dal Dr. Maurizio Monaco</p>
@@ -154,7 +245,7 @@
 
 <div id="finestraContatti" style="display:none; position: fixed; top: 20%; left: 50%; transform: translateX(-50%); background: white; border: 2px solid #007acc; padding: 20px 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.2); z-index: 9999; text-align: center;">
   <h3>📬 Contatti</h3>
-  <p>Per qualsiasi informazione o dubbio contattare:<br><strong><a href="mailto:odontoiatria.monaco@gmail.com" style="color:#007acc;">odontoiatria.monaco@gmail.com</a></strong></p>
+  <p>Per qualsiasi informazione o dubbio contattare:<br><strong><a href="/cdn-cgi/l/email-protection#4a252e25243e25232b3e38232b642725242b29250a2d272b232664292527" style="color:#007acc;"><span class="__cf_email__" data-cfemail="3f505b50514b50565e4b4d565e115250515e5c507f58525e5653115c5052">[email&#160;protected]</span></a></strong></p>
   <button onclick="nascondiContatti()" style="margin-top: 10px; padding: 6px 12px; background: linear-gradient(to bottom, #ff5b68, #dc3545); color: white; border: none; border-radius: 4px; border-bottom: 2px solid #bd2130; cursor: pointer;">Chiudi</button>
 </div>
 
@@ -162,23 +253,9 @@
   <div class="form-group">
     <label for="nome">Cognome e Nome del paziente:</label>
     <input type="text" id="nome" placeholder="Inserisci cognome e nome">
-  </div>
-  
-  <!-- IMPORT PDF REALGUIDE -->
-  <div class="import-pdf-section">
-    <div class="import-pdf-header">
-      <span class="import-icon">📄</span>
-      <span class="import-title">Importa da Report Implantare</span>
-    </div>
-    <p class="import-description">Carica il PDF del report implantare (RealGuide, BlueSkyBio, coDiagnostix, ecc.) per compilare automaticamente i dati.</p>
-    <div class="import-actions">
-      <label class="btn-import">
-        📥 Seleziona PDF Report
-        <input type="file" id="pdf-import" accept=".pdf" onchange="importaPDFReport(event)" style="display:none;">
-      </label>
-      <button type="button" class="btn-import-help" onclick="mostraAiutoPDF()">❓ Formati supportati</button>
-    </div>
-    <div id="pdf-import-status" class="import-status"></div>
+    <button onclick="apriImportReport()" style="margin-top:8px; background:linear-gradient(to bottom, #0056b3, #003d82); color:white; padding:8px 16px; border:none; border-radius:6px; cursor:pointer; font-size:13px; border-bottom:3px solid #002855; width:100%;">
+      📄 IMPORTA REPORT IMPLANTARE (funzione beta)
+    </button>
   </div>
 
   <!-- ODONTOGRAMMA DIGITALE STILIZZATO -->
@@ -224,7 +301,7 @@
     <button onclick="document.getElementById('fileInput').click()">📂 Carica Dati</button>
     <button id="saveBtn" onclick="salvaDati()">💾 Salva Dati</button>
     <button id="elaboraBtn" onclick="elabora()">ELABORA</button>
-    <button id="commonDrillBtn" onclick="calcolaFresaComune()">🔄 Raggruppa Preparazione</button>
+    <button id="commonDrillBtn" onclick="calcolaFresaComune()">🔄 Flusso di Preparazione</button>
     <button id="odontoBtn" onclick="mostraOdontogramma()" style="display:none;">🦷 Sintesi Odontogramma</button>
     <button id="resetBtn" onclick="resetta()">RESET</button>
     <button id="pdfBtn" onclick="esportaPDF()">ESPORTA PDF</button>
@@ -275,8 +352,14 @@
   </a>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
