@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PROTOCOLLO B1ONE Mobile</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- POP-UP AVVISI -->
+<div id="alert-overlay">
+  <div id="alert-box">
+    <span id="alert-title">⚠️ Attenzione</span>
+    <div id="alert-message"></div>
+    <button id="alert-btn" onclick="closeCustomAlert()">OK</button>
+  </div>
+</div>
+
+<!-- PASSWORD OVERLAY (NASCOSTO DEFAULT) -->
+<div id="password-overlay" style="display:none;">
+  <div id="password-box">
+    <h2>Accesso Riservato</h2>
+    <p>Inserisci la password per utilizzare il protocollo.</p>
+    <input type="password" id="password-input" placeholder="Password" autofocus>
+    <button onclick="checkPassword()">Accedi</button>
+  </div>
+</div>
+
+<!-- DISCLAIMER OVERLAY (VISIBILE DEFAULT) -->
+<div id="disclaimer-overlay" style="display:flex;">
+  <div id="disclaimer-box">
+    <div class="disclaimer-header">
+       <h2>⚠️ Disclaimer Importante</h2>
+    </div>
+    <div class="disclaimer-body">
+      <div class="disclaimer-text">
+        <p><strong>Limitazione di Responsabilità:</strong> L'autore non si assume alcuna responsabilità per il risultato clinico derivante dall'uso di questo software. Le decisioni cliniche rimangono esclusiva responsabilità del professionista.</p>
+        <p><strong>Scopo Didattico:</strong> Questo software è fornito esclusivamente a scopo didattico e di studio. È attualmente in fase di sviluppo (Beta).</p>
+        <p><strong>Privacy e Dati:</strong> Tutti i dati inseriti rimangono esclusivamente sul tuo computer. Nessun dato viene trasmesso, registrato o salvato su server esterni, garantendo la massima privacy del paziente.</p>
+      </div>
+    </div>
+    <div class="disclaimer-footer">
+      <div class="disclaimer-check">
+        <input type="checkbox" id="accept-check" onchange="toggleDisclaimerBtn()">
+        <label for="accept-check">Ho letto, compreso e accetto le condizioni sopra riportate.</label>
+      </div>
+      <button onclick="acceptDisclaimer()" id="disclaimer-btn" disabled>Prosegui</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDITOR -->
+<div id="editor-overlay">
+  <div class="editor-modal">
+    <div class="editor-top-bar">
+      <div class="editor-title">🛠 Editor Protocolli</div>
+      <div class="editor-actions">
+        <button class="btn-blue" onclick="scaricaScriptCompleto()">💾 Salva Script Completo</button>
+        <button class="btn-green" onclick="salvaProtocolliDB()">Salva Temp (Cache)</button>
+        <button class="btn-red" onclick="chiudiEditor()">Chiudi</button>
+      </div>
+    </div>
+    <div class="editor-filters">
+      <div class="filter-item">
+        <label>Seleziona Impianto:</label>
+        <select id="edit-b1one" onchange="renderEditorTable()">
+          <option value="High">B1One High</option>
+          <option value="Medium">B1One Medium</option>
+          <option value="Low">B1One Low</option>
+        </select>
+      </div>
+      <div class="filter-item">
+        <label>Seleziona Diametro:</label>
+        <select id="edit-diametro" onchange="renderEditorTable()">
+          <option value="2.7">Ø 2.7</option>
+          <option value="3.2">Ø 3.2</option>
+          <option value="3.7">Ø 3.7</option>
+          <option value="4.2">Ø 4.2</option>
+          <option value="4.8">Ø 4.8</option>
+        </select>
+      </div>
+      <div class="filter-item" style="display:flex; align-items:flex-end;">
+         <button onclick="ripristinaDefault()" style="background: linear-gradient(to bottom, #ffb74d, #f57c00); color: white; padding: 8px; font-size: 13px; border-bottom: 2px solid #e65100;" type="button">⚠️ Ripristina Originali</button>
+      </div>
+    </div>
+    <div class="editor-content">
+      <div id="editor-notes-container">
+          <label>📝 Note Cliniche Generali (Comuni per questo tipo/diametro):</label>
+          <textarea id="edit-general-notes" placeholder="Scrivi qui le note cliniche valide per tutto l'impianto selezionato..." onchange="updateGeneralNotes(this.value)"></textarea>
+      </div>
+      <table class="proto-table">
+        <thead>
+          <tr>
+            <th width="10%">Densità</th>
+            <th width="15%">Carico</th>
+            <th width="30%">Fresa / Sequenza</th>
+            <th width="30%">Preparazione / Note</th>
+            <th width="15%">Testa (opz.)</th>
+          </tr>
+        </thead>
+        <tbody id="editor-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- SINTESI PREPARAZIONE MODAL (combinata: odontogramma + flusso) -->
+<div id="odonto-overlay">
+    <div class="editor-modal" style="background:#555; width:100%; height:100%;">
+        <div class="editor-top-bar">
+            <div class="editor-title">📋 Sintesi Preparazione</div>
+            <div class="editor-actions">
+                <button class="btn-green" onclick="esportaSintesiPDF()">📄 Scarica PDF</button>
+                <button class="btn-red" onclick="closeOdonto()">Chiudi</button>
+            </div>
+        </div>
+        <div class="odonto-content" style="display:flex; justify-content:center; background:#888; padding:20px; overflow:auto;">
+            <div id="odonto-sheet">
+                <!-- Contenuto generato dinamicamente -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- IMPORT REPORT REALGUIDE OVERLAY -->
+<div id="import-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:10000; justify-content:center; align-items:center;">
+    <div style="background:white; border-radius:12px; max-width:95%; max-height:95%; overflow:auto; box-shadow:0 10px 40px rgba(0,0,0,0.3);">
+        <div style="background:linear-gradient(135deg, #0056b3, #007acc); color:white; padding:15px 20px; border-radius:12px 12px 0 0; display:flex; justify-content:space-between; align-items:center;">
+            <h2 style="margin:0; font-size:18px;">📄 IMPORTA REPORT IMPLANTARE (funzione beta)</h2>
+            <button onclick="chiudiImportOverlay()" style="background:#ff5252; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:bold;">✕ Chiudi</button>
+        </div>
+        
+        <div id="import-step1" style="padding:20px; text-align:center;">
+            <p style="color:#555; margin-bottom:20px;">Seleziona il file PDF del Report Implantare generato da RealGuide</p>
+            <input type="file" id="pdfFileInput" accept=".pdf" style="display:none" onchange="processaPDFReport(event)">
+            <button onclick="document.getElementById('pdfFileInput').click()" style="background:linear-gradient(to bottom, #4CAF50, #388E3C); color:white; padding:15px 30px; border:none; border-radius:8px; font-size:16px; cursor:pointer; border-bottom:3px solid #1B5E20;">
+                📂 Seleziona PDF Report
+            </button>
+            <div id="import-loading" style="display:none; margin-top:20px;">
+                <div style="border:4px solid #f3f3f3; border-top:4px solid #0056b3; border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite; margin:0 auto;"></div>
+                <p style="color:#666; margin-top:10px;">Analisi del report in corso...</p>
+            </div>
+        </div>
+        
+        <div id="import-step2" style="display:none; padding:20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h3 style="margin:0; color:#333;">📋 Anteprima Dati Estratti</h3>
+                <button onclick="mostraTestoOCR()" style="background:#ff9800; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:12px;">👁️ Mostra Testo Raw</button>
+            </div>
+            
+            <div style="background:#f5f5f5; padding:10px 15px; border-radius:6px; margin-bottom:15px;">
+                <label style="font-weight:bold; color:#555;">Paziente:</label>
+                <input type="text" id="import-paziente" style="width:100%; padding:8px; margin-top:5px; border:1px solid #ddd; border-radius:4px; font-size:14px;">
+            </div>
+            
+            <div style="overflow-x:auto;">
+                <table id="import-table" style="width:100%; border-collapse:collapse; font-size:13px;">
+                    <thead>
+                        <tr style="background:#0056b3; color:white;">
+                            <th style="padding:10px; border:1px solid #ddd;">Dente</th>
+                            <th style="padding:10px; border:1px solid #ddd;">Tipo</th>
+                            <th style="padding:10px; border:1px solid #ddd;">Diametro</th>
+                            <th style="padding:10px; border:1px solid #ddd;">Lunghezza</th>
+                            <th style="padding:10px; border:1px solid #ddd;">Densità HU</th>
+                            <th style="padding:10px; border:1px solid #ddd;">Carico Imm.</th>
+                            <th style="padding:10px; border:1px solid #ddd;">Post-Estr.</th>
+                            <th style="padding:10px; border:1px solid #ddd;">Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody id="import-tbody"></tbody>
+                </table>
+            </div>
+            
+            <div style="margin-top:20px; text-align:center; display:flex; gap:10px; justify-content:center;">
+                <button onclick="aggiungiRigaImport()" style="background:#2196F3; color:white; border:none; padding:10px 20px; border-radius:6px; cursor:pointer;">➕ Aggiungi Impianto</button>
+                <button onclick="confermaImportazione()" style="background:linear-gradient(to bottom, #4CAF50, #388E3C); color:white; border:none; padding:10px 30px; border-radius:6px; cursor:pointer; font-weight:bold; border-bottom:3px solid #1B5E20;">✅ Conferma e Inserisci</button>
+                <button onclick="chiudiImportOverlay()" style="background:#f44336; color:white; border:none; padding:10px 20px; border-radius:6px; cursor:pointer;">❌ Annulla</button>
+            </div>
+        </div>
+        
+        <div id="import-ocr-raw" style="display:none; padding:20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h3 style="margin:0; color:#333;">📝 Testo Estratto dal PDF</h3>
+                <button onclick="nascondiTestoOCR()" style="background:#666; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">← Torna alla Griglia</button>
+            </div>
+            <textarea id="ocr-text-area" style="width:100%; height:300px; font-family:monospace; font-size:12px; padding:10px; border:1px solid #ddd; border-radius:4px;" readonly></textarea>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+#import-table input, #import-table select {
+    width: 100%;
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    box-sizing: border-box;
+}
+#import-table input[type="checkbox"] {
+    width: auto;
+}
+#import-table td {
+    padding: 8px;
+    border: 1px solid #ddd;
+    vertical-align: middle;
+}
+#import-table tr:nth-child(even) {
+    background: #f9f9f9;
+}
+</style>
+
+<header>
+  <h1>PROTOCOLLO B1ONE</h1>
+  <p>Ideato dal Dr. Maurizio Monaco</p>
+  <p style="color:white; font-size:13px; margin-top:4px;">🔒 I dati restano nel browser dell'utente</p>
+</header>
+
+<div id="finestraContatti" style="display:none; position: fixed; top: 20%; left: 50%; transform: translateX(-50%); background: white; border: 2px solid #007acc; padding: 20px 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.2); z-index: 9999; text-align: center;">
+  <h3>📬 Contatti</h3>
+  <p>Per qualsiasi informazione o dubbio contattare:<br><strong><a href="/cdn-cgi/l/email-protection#4a252e25243e25232b3e38232b642725242b29250a2d272b232664292527" style="color:#007acc;"><span class="__cf_email__" data-cfemail="3f505b50514b50565e4b4d565e115250515e5c507f58525e5653115c5052">[email&#160;protected]</span></a></strong></p>
+  <button onclick="nascondiContatti()" style="margin-top: 10px; padding: 6px 12px; background: linear-gradient(to bottom, #ff5b68, #dc3545); color: white; border: none; border-radius: 4px; border-bottom: 2px solid #bd2130; cursor: pointer;">Chiudi</button>
+</div>
+
+<div class="container">
+  <div class="form-group">
+    <label for="nome">Cognome e Nome del paziente:</label>
+    <input type="text" id="nome" placeholder="Inserisci cognome e nome">
+    <button onclick="apriImportReport()" style="margin-top:8px; background:linear-gradient(to bottom, #0056b3, #003d82); color:white; padding:8px 16px; border:none; border-radius:6px; cursor:pointer; font-size:13px; border-bottom:3px solid #002855; width:100%;">
+      📄 IMPORTA REPORT IMPLANTARE (funzione beta)
+    </button>
+  </div>
+
+  <!-- ODONTOGRAMMA DIGITALE STILIZZATO -->
+  <div class="odontogramma-digitale">
+    <div class="odonto-digital-header">
+      <h3>Odontogramma Digitale</h3>
+      <div class="odonto-status">Stato: <span id="odonto-stato">Pronto</span></div>
+    </div>
+    
+    <div class="arcade-section">
+      <div class="arcade-title">ARCATA SUPERIORE</div>
+      <div class="teeth-row-wrapper">
+        <div class="teeth-row quadrant" id="selector-upper-right"></div>
+        <div class="quadrant-divider"></div>
+        <div class="teeth-row quadrant" id="selector-upper-left"></div>
+      </div>
+    </div>
+    
+    <div class="arcade-section">
+      <div class="arcade-title">ARCATA INFERIORE</div>
+      <div class="teeth-row-wrapper">
+        <div class="teeth-row quadrant" id="selector-lower-right"></div>
+        <div class="quadrant-divider"></div>
+        <div class="teeth-row quadrant" id="selector-lower-left"></div>
+      </div>
+    </div>
+    
+    <div class="selection-summary-new">
+      <span class="summary-badge"><span id="selection-count">0</span> impianti</span>
+      <span class="summary-detail">Selezionati: <span id="selection-list">nessuno</span></span>
+    </div>
+  </div>
+
+  <!-- Campi nascosti per compatibilità -->
+  <input type="hidden" id="impianti" value="">
+  <div id="selector-upper" style="display:none;"></div>
+  <div id="selector-lower" style="display:none;"></div>
+
+  <div id="impianti-container"></div>
+
+  <div class="button-container">
+    <input type="file" id="fileInput" accept=".json" style="display:none" onchange="caricaDati(event)" onclick="this.value=null">
+    <button onclick="document.getElementById('fileInput').click()">📂 Carica Dati</button>
+    <button id="saveBtn" onclick="salvaDati()">💾 Salva Dati</button>
+    <button id="elaboraBtn" onclick="elabora()">ELABORA</button>
+    <button id="resetBtn" onclick="resetta()">RESET</button>
+    <button id="pdfBtn" onclick="esportaPDF()">ESPORTA PDF</button>
+    
+    <!-- PULSANTE PRINCIPALE - SINTESI PREPARAZIONE -->
+    <div style="width: 100%; margin-top: 15px;">
+      <button id="sintesiBtn" onclick="mostraSintesiPreparazione()" style="width:100%; padding:15px 20px; font-size:18px; font-weight:bold; background:linear-gradient(to bottom, #ff6b35, #e53e00); color:white; border:none; border-radius:8px; border-bottom:4px solid #b71c00; cursor:pointer; box-shadow: 0 4px 15px rgba(229,62,0,0.4); text-transform:uppercase; letter-spacing:1px;">
+        📋 SINTESI PREPARAZIONE
+      </button>
+    </div>
+    
+    <div style="width: 100%; text-align: center; margin-top: 12px; display: flex; justify-content: center; gap: 10px;">
+      <button id="b1oneInfoBtn" onclick="window.open('https://youtube.com/playlist?list=PL2KSU2Q5dpN96IummPSUDUAgjX39-qbBs&si=qXBBy7PkfYo984Bi', '_blank')">
+        🎥 Conoscere il B1ONE
+      </button>
+      <button id="kitPrepBtn" onclick="window.open('Kit di frese.pdf', '_blank')" style="font-weight: bold; background: linear-gradient(to bottom, #ab47bc, #7b1fa2); color: white; border-bottom: 3px solid #4a148c;">
+        📥 Kit Preparazione
+      </button>
+    </div>
+  </div>
+
+  <div id="output">
+    <p style="font-size: 13px; font-style: italic; color: #555; margin-top: 25px; text-align: center;">
+      ⚠️ Questo software è in fase <strong>beta</strong>. L'ideatore, Dr. Maurizio Monaco, <strong>non si assume alcuna responsabilità</strong> clinica.
+    </p>
+  </div>
+
+  <div style="text-align:right; margin-top:10px;">
+    <button onclick="mostraLogin()" style="font-size:13px; padding:5px 10px; background: linear-gradient(to bottom, #777, #555); border-bottom: 2px solid #333;" type="button">🔒 Accesso Admin</button>
+  </div>
+
+  <div id="loginBox" style="display:none; margin-top:10px;">
+    <input id="adminPass" type="password" placeholder="Password Admin" style="padding:6px; margin-right:4px;">
+    <button onclick="verificaLogin()" style="padding:6px;">Entra</button>
+  </div>
+
+  <div id="adminArea" style="display:none; margin-top:20px; padding:15px; background:#fff4e6; border:1px solid #ffcc80; border-radius:8px;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="margin:0; color:#333;">Area Amministratore</h3>
+        <button onclick="apriEditor()" style="background: linear-gradient(to bottom, #26c6da, #0097a7); color: white; border-bottom: 3px solid #006064;" type="button">🛠 Editor Protocolli</button>
+    </div>
+    <p style="margin-top:10px;">👁️‍🗨️ Accessi: <span id="accessiCount">0</span> | 🦷 Impianti: <span id="impiantiCount">0</span></p>
+  </div>
+</div>
+
+<div style="position: fixed; bottom: 20px; right: 20px; z-index: 999;">
+  <button onclick="mostraContatti()" style="background: linear-gradient(to bottom, #4CAF50, #388E3C); color: white; padding: 10px 16px; border: none; border-radius: 6px; font-weight: bold; font-size: 14px; cursor: pointer; border-bottom: 3px solid #1B5E20;" type="button">
+    📬 Contatti
+  </button>
+</div>
+<div style="position: fixed; bottom: 20px; left: 20px; z-index: 999;">
+  <a href="Tutorial.pdf" target="_blank" rel="noopener noreferrer" style="text-decoration: none;">
+    <button style="background: linear-gradient(to bottom, #ff9800, #f57c00); color: white; padding: 10px 16px; border: none; border-radius: 6px; font-weight: bold; font-size: 14px; cursor: pointer; border-bottom: 3px solid #e65100;" type="button">
+      📄 Istruzioni
+    </button>
+  </a>
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
