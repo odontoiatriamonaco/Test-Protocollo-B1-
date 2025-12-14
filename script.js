@@ -2121,7 +2121,8 @@ function creaCardImpianto(dente, index) {
         '<div class="impianto-title"><strong>🦷 Dente ' + dente + '</strong></div>' +
         '<button class="collapse-btn" onclick="toggleCard(this)">−</button>' +
     '</div>' +
-    '<div class="impianto-content">' +
+    '<div class="impianto-content" style="display:flex; gap:15px;">' +
+        '<div class="impianto-form" style="flex:1;">' +
         '<div class="form-group">' +
             '<label>Densità Ossea: <span style="color:red; font-weight:bold;">*</span></label>' +
             '<div style="display:flex; align-items:center; gap:15px; flex-wrap:wrap;">' +
@@ -2237,7 +2238,7 @@ function creaCardImpianto(dente, index) {
             '<div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">' +
                 '<div style="display:flex; align-items:center; gap:4px;">' +
                     '<span style="font-size:11px; color:#888;">Tipo:</span>' +
-                    '<select data-field="b1one" onchange="aggiornaOpzioniB1OneDente(' + dente + '); salvaStatoImpianto(' + dente + ')" style="padding:3px 6px; font-size:13px;">' +
+                    '<select data-field="b1one" onchange="aggiornaOpzioniB1OneDente(' + dente + '); aggiornaImmagineCard(' + dente + '); salvaStatoImpianto(' + dente + ')" style="padding:3px 6px; font-size:13px;">' +
                         '<option value="High" style="color:red;"' + (b1oneValue === 'High' ? ' selected' : '') + '>High</option>' +
                         '<option value="Medium" style="color:orange;"' + (b1oneValue === 'Medium' ? ' selected' : '') + '>Medium</option>' +
                         '<option value="Low" style="color:green;"' + (b1oneValue === 'Low' ? ' selected' : '') + '>Low</option>' +
@@ -2245,7 +2246,7 @@ function creaCardImpianto(dente, index) {
                 '</div>' +
                 '<div style="display:flex; align-items:center; gap:4px;">' +
                     '<span style="font-size:11px; color:#888;">Ø:</span>' +
-                    '<select data-field="diametro" onchange="aggiornaTuttoDente(' + dente + '); salvaStatoImpianto(' + dente + ')" style="padding:3px 6px; font-size:13px;">' +
+                    '<select data-field="diametro" onchange="aggiornaTuttoDente(' + dente + '); aggiornaImmagineCard(' + dente + '); salvaStatoImpianto(' + dente + ')" style="padding:3px 6px; font-size:13px;">' +
                         '<option value="2.7"' + (diametroValue === '2.7' ? ' selected' : '') + '>2.7</option>' +
                         '<option value="3.2"' + (diametroValue === '3.2' ? ' selected' : '') + '>3.2</option>' +
                         '<option value="3.7"' + (diametroValue === '3.7' ? ' selected' : '') + '>3.7</option>' +
@@ -2255,15 +2256,22 @@ function creaCardImpianto(dente, index) {
                 '</div>' +
                 '<div style="display:flex; align-items:center; gap:4px;">' +
                     '<span style="font-size:11px; color:#888;">L:</span>' +
-                    '<select data-field="lunghezza" style="padding:3px 6px; font-size:13px;"></select>' +
+                    '<select data-field="lunghezza" onchange="aggiornaImmagineCard(' + dente + '); salvaStatoImpianto(' + dente + ')" style="padding:3px 6px; font-size:13px;"></select>' +
                 '</div>' +
             '</div>' +
+        '</div>' +
+        '</div>' +
+        '<div id="impianto_image_' + dente + '" class="impianto-image-area" style="width:140px; min-width:140px; background:linear-gradient(180deg, #2d3748 0%, #1a202c 100%); border-radius:10px; padding:12px; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:8px;">' +
+            '<div id="impianto_label_' + dente + '" style="color:#00d4ff; font-weight:bold; font-size:12px; text-align:center;">High Ø' + diametroValue + ' x ' + lunghezzaValue + 'mm</div>' +
+            '<img id="impianto_img_' + dente + '" src="" style="max-width:100%; max-height:150px; border-radius:4px;">' +
+            '<button id="impianto_btn_' + dente + '" onclick="" style="margin-top:auto; background:linear-gradient(to bottom, #17a2b8, #138496); color:white; padding:6px 12px; border:none; border-radius:20px; font-size:11px; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.2);">📄 Indicazioni</button>' +
         '</div>' +
     '</div>';
     
     setTimeout(function() {
         aggiornaTuttoDente(dente);
         aggiornaCorticale(dente);
+        aggiornaImmagineCard(dente);
         var lunghezzaEl = card.querySelector('[data-field="lunghezza"]');
         if (lunghezzaEl && lunghezzaValue) {
             lunghezzaEl.value = lunghezzaValue;
@@ -4772,7 +4780,8 @@ function creaCardImpianto(dente, index) {
         '<div class="impianto-title"><strong>🦷 Dente ' + dente + '</strong></div>' +
         '<button class="collapse-btn" onclick="toggleCard(this)">−</button>' +
     '</div>' +
-    '<div class="impianto-content">' +
+    '<div class="impianto-content" style="display:flex; gap:15px;">' +
+        '<div class="impianto-form" style="flex:1;">' +
         '<div class="form-group">' +
             '<label>Densità Ossea: <span style="color:red; font-weight:bold;">*</span></label>' +
             '<div style="display:flex; align-items:center; gap:15px; flex-wrap:wrap;">' +
@@ -4888,7 +4897,7 @@ function creaCardImpianto(dente, index) {
             '<div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">' +
                 '<div style="display:flex; align-items:center; gap:4px;">' +
                     '<span style="font-size:11px; color:#888;">Tipo:</span>' +
-                    '<select data-field="b1one" onchange="aggiornaOpzioniB1OneDente(' + dente + '); salvaStatoImpianto(' + dente + ')" style="padding:3px 6px; font-size:13px;">' +
+                    '<select data-field="b1one" onchange="aggiornaOpzioniB1OneDente(' + dente + '); aggiornaImmagineCard(' + dente + '); salvaStatoImpianto(' + dente + ')" style="padding:3px 6px; font-size:13px;">' +
                         '<option value="High" style="color:red;"' + (b1oneValue === 'High' ? ' selected' : '') + '>High</option>' +
                         '<option value="Medium" style="color:orange;"' + (b1oneValue === 'Medium' ? ' selected' : '') + '>Medium</option>' +
                         '<option value="Low" style="color:green;"' + (b1oneValue === 'Low' ? ' selected' : '') + '>Low</option>' +
@@ -4896,7 +4905,7 @@ function creaCardImpianto(dente, index) {
                 '</div>' +
                 '<div style="display:flex; align-items:center; gap:4px;">' +
                     '<span style="font-size:11px; color:#888;">Ø:</span>' +
-                    '<select data-field="diametro" onchange="aggiornaTuttoDente(' + dente + '); salvaStatoImpianto(' + dente + ')" style="padding:3px 6px; font-size:13px;">' +
+                    '<select data-field="diametro" onchange="aggiornaTuttoDente(' + dente + '); aggiornaImmagineCard(' + dente + '); salvaStatoImpianto(' + dente + ')" style="padding:3px 6px; font-size:13px;">' +
                         '<option value="2.7"' + (diametroValue === '2.7' ? ' selected' : '') + '>2.7</option>' +
                         '<option value="3.2"' + (diametroValue === '3.2' ? ' selected' : '') + '>3.2</option>' +
                         '<option value="3.7"' + (diametroValue === '3.7' ? ' selected' : '') + '>3.7</option>' +
@@ -4906,15 +4915,22 @@ function creaCardImpianto(dente, index) {
                 '</div>' +
                 '<div style="display:flex; align-items:center; gap:4px;">' +
                     '<span style="font-size:11px; color:#888;">L:</span>' +
-                    '<select data-field="lunghezza" style="padding:3px 6px; font-size:13px;"></select>' +
+                    '<select data-field="lunghezza" onchange="aggiornaImmagineCard(' + dente + '); salvaStatoImpianto(' + dente + ')" style="padding:3px 6px; font-size:13px;"></select>' +
                 '</div>' +
             '</div>' +
+        '</div>' +
+        '</div>' +
+        '<div id="impianto_image_' + dente + '" class="impianto-image-area" style="width:140px; min-width:140px; background:linear-gradient(180deg, #2d3748 0%, #1a202c 100%); border-radius:10px; padding:12px; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:8px;">' +
+            '<div id="impianto_label_' + dente + '" style="color:#00d4ff; font-weight:bold; font-size:12px; text-align:center;">High Ø' + diametroValue + ' x ' + lunghezzaValue + 'mm</div>' +
+            '<img id="impianto_img_' + dente + '" src="" style="max-width:100%; max-height:150px; border-radius:4px;">' +
+            '<button id="impianto_btn_' + dente + '" onclick="" style="margin-top:auto; background:linear-gradient(to bottom, #17a2b8, #138496); color:white; padding:6px 12px; border:none; border-radius:20px; font-size:11px; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.2);">📄 Indicazioni</button>' +
         '</div>' +
     '</div>';
     
     setTimeout(function() {
         aggiornaTuttoDente(dente);
         aggiornaCorticale(dente);
+        aggiornaImmagineCard(dente);
         var lunghezzaEl = card.querySelector('[data-field="lunghezza"]');
         if (lunghezzaEl && lunghezzaValue) {
             lunghezzaEl.value = lunghezzaValue;
@@ -6401,6 +6417,67 @@ window.onload = function() {
 };
 
 // Funzione per mostrare info sulla funzione ROI - apre il PDF
+// Funzione per aggiornare l'immagine dell'impianto nella card
+function aggiornaImmagineCard(dente) {
+    var card = document.querySelector('[data-dente="' + dente + '"]');
+    if (!card) return;
+    
+    var b1oneEl = card.querySelector('[data-field="b1one"]');
+    var diametroEl = card.querySelector('[data-field="diametro"]');
+    var lunghezzaEl = card.querySelector('[data-field="lunghezza"]');
+    
+    var b1one = b1oneEl ? b1oneEl.value : 'High';
+    var diametro = diametroEl ? diametroEl.value : '3.7';
+    var lunghezza = lunghezzaEl ? lunghezzaEl.value : '10';
+    
+    // Mappa immagini locali
+    var immaginiLocali = {
+        "4.8_Medium": "48_Medium.png", "4.8_Low": "48_Low.png",
+        "4.2_Low": "42_Low.png", "4.2_Medium": "42_Medium.png", "4.2_High": "42_High.png",
+        "3.7_Low": "37_Low.png", "3.7_Medium": "37_Medium.png", "3.7_High": "37_High.png",
+        "3.2_High": "32_High.png", "2.7_High": "27_High.png"
+    };
+    
+    var imgKey = diametro + "_" + b1one;
+    var placeholderSrc = 'https://placehold.co/120x180/2d3748/00d4ff?text=' + b1one + '%0A' + diametro;
+    var imgSrc = immaginiLocali[imgKey] || placeholderSrc;
+    
+    // Aggiorna etichetta
+    var labelEl = document.getElementById('impianto_label_' + dente);
+    if (labelEl) {
+        var colore = b1one === 'High' ? '#ff6b6b' : (b1one === 'Medium' ? '#ffa726' : '#66bb6a');
+        labelEl.innerHTML = '<span style="color:' + colore + ';">' + b1one + '</span> Ø' + diametro + ' x ' + lunghezza + 'mm';
+    }
+    
+    // Aggiorna immagine
+    var imgEl = document.getElementById('impianto_img_' + dente);
+    if (imgEl) {
+        imgEl.src = imgSrc;
+        imgEl.onerror = function() {
+            this.onerror = null;
+            this.src = placeholderSrc;
+        };
+    }
+    
+    // Aggiorna pulsante indicazioni
+    var btnEl = document.getElementById('impianto_btn_' + dente);
+    if (btnEl) {
+        var pdfFile = "";
+        if (diametro === "2.7") pdfFile = "indicazioni_27high.pdf";
+        else if (diametro === "3.2") pdfFile = "indicazioni_32high.pdf";
+        else if (diametro === "3.7") pdfFile = "indicazioni_37.pdf";
+        else if (diametro === "4.2") pdfFile = "indicazioni_42.pdf";
+        else if (diametro === "4.8") pdfFile = "indicazioni_48.pdf";
+        
+        if (pdfFile) {
+            btnEl.style.display = 'block';
+            btnEl.onclick = function() { window.open(pdfFile, '_blank'); };
+        } else {
+            btnEl.style.display = 'none';
+        }
+    }
+}
+
 function mostraInfoROI() {
     window.open('Funzione_ROI.pdf', '_blank');
 }
