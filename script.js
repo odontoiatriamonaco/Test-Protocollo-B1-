@@ -2261,10 +2261,10 @@ function creaCardImpianto(dente, index) {
             '</div>' +
         '</div>' +
         '</div>' +
-        '<div id="impianto_image_' + dente + '" class="impianto-image-area" style="width:140px; min-width:140px; background:linear-gradient(180deg, #2d3748 0%, #1a202c 100%); border-radius:10px; padding:12px; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:8px;">' +
+        '<div id="impianto_image_' + dente + '" class="impianto-image-area" style="width:160px; min-width:160px; background:linear-gradient(180deg, #2d3748 0%, #1a202c 100%); border-radius:10px; padding:10px; display:flex; flex-direction:column; align-items:center; justify-content:space-between;">' +
             '<div id="impianto_label_' + dente + '" style="color:#00d4ff; font-weight:bold; font-size:12px; text-align:center;">High Ø' + diametroValue + ' x ' + lunghezzaValue + 'mm</div>' +
-            '<img id="impianto_img_' + dente + '" src="" style="max-width:100%; max-height:150px; border-radius:4px;">' +
-            '<button id="impianto_btn_' + dente + '" onclick="" style="margin-top:auto; background:linear-gradient(to bottom, #17a2b8, #138496); color:white; padding:6px 12px; border:none; border-radius:20px; font-size:11px; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.2);">📄 Indicazioni</button>' +
+            '<img id="impianto_img_' + dente + '" src="" style="max-width:100%; max-height:220px; border-radius:4px; flex:1; object-fit:contain;">' +
+            '<button id="impianto_btn_' + dente + '" class="btn-indicazioni-card" onclick="" style="margin-top:6px; background:linear-gradient(to bottom, #17a2b8, #138496); color:white; padding:3px 8px; border:none; border-radius:10px; font-size:9px; cursor:pointer; width:auto; flex-grow:0; flex-shrink:0; display:inline-block;">📄 Indicazioni</button>' +
         '</div>' +
     '</div>';
     
@@ -2950,7 +2950,7 @@ function elabora() {
             var imgKey = diametro + "_" + b1one;
             var placeholderSrc = 'https://placehold.co/150x250/e0f7fa/006064?text=' + b1one + '+' + diametro;
             var imgSrc = immaginiLocali[imgKey] || placeholderSrc;
-            var imgTag = '<img src="' + imgSrc + '" onerror="this.onerror=null;this.src=\'' + placeholderSrc + '\';" style="max-height: 180px; border-radius:4px;">';
+            var imgTag = '<img src="' + imgSrc + '" onerror="this.onerror=null;this.src=\'' + placeholderSrc + '\';" style="max-height: 380px; border-radius:4px;">';
 
             // Bottone Indicazioni PDF
             var pdfFile = "";
@@ -2960,7 +2960,7 @@ function elabora() {
             else if (diametro === "4.2") pdfFile = "indicazioni_42.pdf";
             else if (diametro === "4.8") pdfFile = "indicazioni_48.pdf";
 
-            var btnHtml = pdfFile ? '<button onclick="window.open(\'' + pdfFile + '\', \'_blank\')" style="margin-top:8px; background: linear-gradient(to bottom, #17a2b8, #138496); color: white; padding: 6px 12px; border: none; border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); border-bottom: 2px solid #117a8b;">📄 Indicazioni</button>' : '';
+            var btnHtml = pdfFile ? '<button onclick="window.open(\'' + pdfFile + '\', \'_blank\')" class="btn-indicazioni-riepilogo" style="margin-top:10px; background: linear-gradient(to bottom, #17a2b8, #138496); color: white; padding: 8px 20px; border: none; border-radius: 15px; font-size: 13px; font-weight:bold; cursor: pointer;">📄 Indicazioni</button>' : '';
 
             // Avviso per posizioni molari con impianti piccoli
             var avvisoResistenza = '';
@@ -3013,7 +3013,7 @@ function elabora() {
                 testaHTML +
                 '</div>' +
                 '<div style="background-color: #007BFF; height: 100%; border-radius: 2px;"></div>' +
-                '<div style="align-self: start; display: flex; flex-direction: column; align-items: center;">' +
+                '<div style="align-self: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">' +
                 labelHtml +
                 imgTag +
                 btnHtml +
@@ -4920,10 +4920,10 @@ function creaCardImpianto(dente, index) {
             '</div>' +
         '</div>' +
         '</div>' +
-        '<div id="impianto_image_' + dente + '" class="impianto-image-area" style="width:140px; min-width:140px; background:linear-gradient(180deg, #2d3748 0%, #1a202c 100%); border-radius:10px; padding:12px; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:8px;">' +
+        '<div id="impianto_image_' + dente + '" class="impianto-image-area" style="width:160px; min-width:160px; background:linear-gradient(180deg, #2d3748 0%, #1a202c 100%); border-radius:10px; padding:10px; display:flex; flex-direction:column; align-items:center; justify-content:space-between;">' +
             '<div id="impianto_label_' + dente + '" style="color:#00d4ff; font-weight:bold; font-size:12px; text-align:center;">High Ø' + diametroValue + ' x ' + lunghezzaValue + 'mm</div>' +
-            '<img id="impianto_img_' + dente + '" src="" style="max-width:100%; max-height:150px; border-radius:4px;">' +
-            '<button id="impianto_btn_' + dente + '" onclick="" style="margin-top:auto; background:linear-gradient(to bottom, #17a2b8, #138496); color:white; padding:6px 12px; border:none; border-radius:20px; font-size:11px; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.2);">📄 Indicazioni</button>' +
+            '<img id="impianto_img_' + dente + '" src="" style="max-width:100%; max-height:220px; border-radius:4px; flex:1; object-fit:contain;">' +
+            '<button id="impianto_btn_' + dente + '" class="btn-indicazioni-card" onclick="" style="margin-top:6px; background:linear-gradient(to bottom, #17a2b8, #138496); color:white; padding:3px 8px; border:none; border-radius:10px; font-size:9px; cursor:pointer; width:auto; flex-grow:0; flex-shrink:0; display:inline-block;">📄 Indicazioni</button>' +
         '</div>' +
     '</div>';
     
@@ -5342,7 +5342,7 @@ function elabora() {
             var imgKey = diametro + "_" + b1one;
             var placeholderSrc = 'https://placehold.co/150x250/e0f7fa/006064?text=' + b1one + '+' + diametro;
             var imgSrc = immaginiLocali[imgKey] || placeholderSrc;
-            var imgTag = '<img src="' + imgSrc + '" onerror="this.onerror=null;this.src=\\'' + placeholderSrc + '\\';" style="max-height: 180px; border-radius:4px;">';
+            var imgTag = '<img src="' + imgSrc + '" onerror="this.onerror=null;this.src=\\'' + placeholderSrc + '\\';" style="max-height: 380px; border-radius:4px;">';
 
             var pdfFile = "";
             if (diametro === "2.7") pdfFile = "indicazioni_27high.pdf";
@@ -5351,7 +5351,7 @@ function elabora() {
             else if (diametro === "4.2") pdfFile = "indicazioni_42.pdf";
             else if (diametro === "4.8") pdfFile = "indicazioni_48.pdf";
 
-            var btnHtml = pdfFile ? '<button onclick="window.open(\\'' + pdfFile + '\\', \\'_blank\\')" style="margin-top:8px; background: linear-gradient(to bottom, #17a2b8, #138496); color: white; padding: 6px 12px; border: none; border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); border-bottom: 2px solid #117a8b;">📄 Indicazioni</button>' : '';
+            var btnHtml = pdfFile ? '<button onclick="window.open(\\'' + pdfFile + '\\', \\'_blank\\')" class="btn-indicazioni-riepilogo" style="margin-top:10px; background: linear-gradient(to bottom, #17a2b8, #138496); color: white; padding: 8px 20px; border: none; border-radius: 15px; font-size: 13px; font-weight:bold; cursor: pointer;">📄 Indicazioni</button>' : '';
 
             var avvisoResistenza = '';
             var dentiMolari = ["16","17","18","26","27","28","36","37","38","46","47","48"];
@@ -5382,7 +5382,7 @@ function elabora() {
                 testaHTML +
                 '</div>' +
                 '<div style="background-color: #007BFF; height: 100%; border-radius: 2px;"></div>' +
-                '<div style="align-self: start; display: flex; flex-direction: column; align-items: center;">' +
+                '<div style="align-self: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">' +
                 labelHtml +
                 imgTag +
                 btnHtml +
