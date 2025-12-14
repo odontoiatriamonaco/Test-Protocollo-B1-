@@ -2075,6 +2075,29 @@ function aggiornaImpiantiContainer() {
     }
 }
 
+
+// Funzione per ottenere l'icona del dente in base al numero
+function getIconaDente(dente) {
+    var num = parseInt(dente);
+    var quadrante = Math.floor(num / 10);
+    var posizione = num % 10;
+    var isSuperiore = (quadrante === 1 || quadrante === 2);
+    
+    var tipo = '';
+    if (posizione === 1 || posizione === 2) {
+        tipo = 'incisivo';
+    } else if (posizione === 3) {
+        tipo = 'canino';
+    } else if (posizione === 4 || posizione === 5) {
+        tipo = 'premolare';
+    } else if (posizione >= 6 && posizione <= 8) {
+        tipo = 'molare';
+    }
+    
+    var iconFile = tipo + (isSuperiore ? '_sup' : '_inf') + '.png';
+    return '<img src="' + iconFile + '" alt="' + tipo + '" style="width:45px; height:45px; object-fit:contain; display:block;">';
+}
+
 function creaCardImpianto(dente, index) {
     var data = impiantiData[dente] || {};
     
@@ -2118,7 +2141,8 @@ function creaCardImpianto(dente, index) {
     }
     
     card.innerHTML = '<div class="impianto-header">' +
-        '<div class="impianto-title"><strong>🦷 Dente ' + dente + '</strong></div>' +
+        '<div style="width:60px; display:flex; align-items:center; justify-content:center;">' + getIconaDente(dente) + '</div>' +
+        '<div class="impianto-title" style="flex:1; text-align:center;"><strong style="font-size:18px;">Dente ' + dente + '</strong></div>' +
         '<button class="collapse-btn" onclick="toggleCard(this)">−</button>' +
     '</div>' +
     '<div class="impianto-content" style="display:flex; gap:15px;">' +
@@ -4777,7 +4801,8 @@ function creaCardImpianto(dente, index) {
     }
     
     card.innerHTML = '<div class="impianto-header">' +
-        '<div class="impianto-title"><strong>🦷 Dente ' + dente + '</strong></div>' +
+        '<div style="width:60px; display:flex; align-items:center; justify-content:center;">' + getIconaDente(dente) + '</div>' +
+        '<div class="impianto-title" style="flex:1; text-align:center;"><strong style="font-size:18px;">Dente ' + dente + '</strong></div>' +
         '<button class="collapse-btn" onclick="toggleCard(this)">−</button>' +
     '</div>' +
     '<div class="impianto-content" style="display:flex; gap:15px;">' +
