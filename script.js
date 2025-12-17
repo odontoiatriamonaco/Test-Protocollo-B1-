@@ -796,6 +796,14 @@ function estraiDatiDaReport(testo) {
             nome = nome.replace(regex, '');
         }
         
+        // MIGLIORATO: Rimuovi solo suffissi OCR chiaramente corrotti
+        // Pattern: nome tutto maiuscolo che finisce con caratteri minuscoli NON italiani tipici (gmé, gme, etc)
+        // Ma NON rimuovere suffissi validi come 'LA' in 'MICHELA'
+        nome = nome.replace(/([A-Z]{3,})([a-z][a-zàèéìòù]{2,})$/g, '$1');
+        
+        // Rimuovi troncamenti OCR comuni alla fine (caratteri non alfabetici)
+        nome = nome.replace(/[^A-Za-zÀ-ú\s]+$/, '');
+        
         // Rimuovi caratteri non alfabetici (tranne spazi)
         nome = nome.replace(/[^A-Za-zÀ-ú\s]/g, ' ');
         
@@ -1114,6 +1122,25 @@ function estraiDatiDaReport(testo) {
     
     // Funzione per estrarre dimensioni dal testo (fallback) - MIGLIORATA per OCR
     function estraiDimensioniDaTesto(pagina) {
+        // Pattern 0 (NUOVO): Formato "HIGH/MEDIUM/LOW X.X x XX mm" - priorità massima
+        var m0 = pagina.match(/\b(?:HIGH|MEDIUM|LOW)\s+(\d[\.,]\d)\s*[xX×]\s*(\d{1,2}(?:[\.,]\d)?)\s*mm/i);
+        if (m0) {
+            var diam = m0[1].replace(',', '.');
+            var lung = m0[2].replace(',', '.');
+            if (['2.7', '3.2', '3.7', '4.2', '4.8', '5.5'].indexOf(diam) !== -1) {
+                if (['6', '8', '10', '12', '14', '15.5', '17'].indexOf(lung) !== -1) {
+                    console.log("📏 Dimensioni estratte con prefisso tipo: " + diam + " x " + lung);
+                    return { diametro: diam, lunghezza: lung };
+                }
+                // Lunghezza intera senza decimali
+                if (['6', '8', '10', '12', '14', '15', '17'].indexOf(lung) !== -1) {
+                    if (lung === '15') lung = '15.5';
+                    console.log("📏 Dimensioni estratte con prefisso tipo: " + diam + " x " + lung);
+                    return { diametro: diam, lunghezza: lung };
+                }
+            }
+        }
+        
         // Pattern 1: Formato standard "X.X x XX mm"
         var m1 = pagina.match(/(\d[\.,]\d)\s*[xX×]\s*(\d{1,2}(?:[\.,]\d)?)\s*mm/i);
         if (m1) {
@@ -1185,9 +1212,17 @@ function estraiDatiDaReport(testo) {
         
         // Trova tutti i codici prodotto nel testo [XXXXXXM] o [XXXXXXL] o [XXXXXXH]
         // Il codice è la fonte PIÙ AFFIDABILE perché difficile da corrompere
-        var regexCodici = /\[(\d{6})([HMLhml1Il])\]/g;
+        // Pattern migliorato per gestire spazi e caratteri OCR anomali
+        // NOTA: Il PDF a volte ha [210324HI invece di [210324H] (I finale invece di ])
+        var regexCodici = /\[(\d{6})\s*([HMLhml1Il])\]?/g;
         var matchCodici;
         var codiciTrovati = [];
+        
+        // Pattern alternativo: cerca anche senza parentesi per OCR corrotti
+        var regexCodiciAlt = /\b(210[2345][0-9]{2})\s*([HMLhml])\b/g;
+        
+        // Pattern specifico per "210324HI" dove I è errore OCR per ]
+        var regexCodiciOCR = /\[(210[2345]\d{2})([HMLhml])I\b/g;
         
         while ((matchCodici = regexCodici.exec(testoCompleto)) !== null) {
             var codice = matchCodici[1];
@@ -1206,6 +1241,124 @@ function estraiDatiDaReport(testo) {
                     posizione: matchCodici.index,
                     tipo: suffisso === 'M' ? 'Medium' : (suffisso === 'L' ? 'Low' : 'High')
                 });
+                console.log("✅ Codice trovato: [" + codice + suffisso + "] → Ø" + codiciDimensioni[codice].diametro + " x " + codiciDimensioni[codice].lunghezza);
+            }
+        }
+        
+        // Prova pattern OCR specifico per [XXXXXXHI dove I è errore per ]
+        if (codiciTrovati.length === 0) {
+            while ((matchCodici = regexCodiciOCR.exec(testoCompleto)) !== null) {
+                var codice = matchCodici[1];
+                var suffisso = matchCodici[2].toUpperCase();
+                codice = correggiCodice(codice);
+                
+                if (codiciDimensioni[codice]) {
+                    codiciTrovati.push({
+                        codice: codice,
+                        suffisso: suffisso,
+                        dimensioni: codiciDimensioni[codice],
+                        posizione: matchCodici.index,
+                        tipo: suffisso === 'M' ? 'Medium' : (suffisso === 'L' ? 'Low' : 'High')
+                    });
+                    console.log("✅ Codice OCR trovato: [" + codice + suffisso + "I] → Ø" + codiciDimensioni[codice].diametro + " x " + codiciDimensioni[codice].lunghezza);
+                }
+            }
+        }
+        
+        // Se non trovati codici con pattern principale, prova pattern alternativo
+        if (codiciTrovati.length === 0) {
+            while ((matchCodici = regexCodiciAlt.exec(testoCompleto)) !== null) {
+                var codice = matchCodici[1];
+                var suffisso = matchCodici[2].toUpperCase();
+                codice = correggiCodice(codice);
+                
+                if (codiciDimensioni[codice]) {
+                    codiciTrovati.push({
+                        codice: codice,
+                        suffisso: suffisso,
+                        dimensioni: codiciDimensioni[codice],
+                        posizione: matchCodici.index,
+                        tipo: suffisso === 'M' ? 'Medium' : (suffisso === 'L' ? 'Low' : 'High')
+                    });
+                }
+            }
+        }
+        
+        // NUOVO: Pattern diretto per "HIGH X.X x XX mm" o "LOW X.X x XX" o simili
+        // Questo cattura le dimensioni direttamente dal testo descrittivo
+        // Pattern 1: con mm nella stessa riga
+        var regexDimensioniDirette = /\b(HIGH|MEDIUM|LOW)\s+(\d[\.,]\d)\s*[xX×]\s*(\d{1,2}(?:[\.,]\d)?)\s*mm/gi;
+        var matchDimensioni;
+        while ((matchDimensioni = regexDimensioniDirette.exec(testoCompleto)) !== null) {
+            var tipo = matchDimensioni[1].charAt(0).toUpperCase() + matchDimensioni[1].slice(1).toLowerCase();
+            var diam = matchDimensioni[2].replace(',', '.');
+            var lung = matchDimensioni[3].replace(',', '.');
+            if (lung.indexOf('.') === -1 && lung !== '6' && lung !== '8') {
+                // Lunghezze intere normali: 10, 12, 14, 17
+            } else if (lung === '15' || lung === '15.5') {
+                lung = '15.5';
+            }
+            
+            // Verifica che siano dimensioni valide
+            if (['2.7', '3.2', '3.7', '4.2', '4.8', '5.5'].indexOf(diam) !== -1 &&
+                ['6', '8', '10', '12', '14', '15.5', '17'].indexOf(lung) !== -1) {
+                
+                // Cerca se esiste già un codice per questo - se no, aggiungi come fonte diretta
+                var esisteGia = false;
+                for (var c = 0; c < codiciTrovati.length; c++) {
+                    if (codiciTrovati[c].dimensioni.diametro === diam && 
+                        codiciTrovati[c].dimensioni.lunghezza === lung) {
+                        esisteGia = true;
+                        break;
+                    }
+                }
+                
+                if (!esisteGia) {
+                    console.log("📏 Dimensioni estratte direttamente (con mm): " + tipo + " " + diam + " x " + lung);
+                    codiciTrovati.push({
+                        codice: 'DIRETTO',
+                        suffisso: tipo === 'High' ? 'H' : (tipo === 'Medium' ? 'M' : 'L'),
+                        dimensioni: { diametro: diam, lunghezza: lung },
+                        posizione: matchDimensioni.index,
+                        tipo: tipo
+                    });
+                }
+            }
+        }
+        
+        // Pattern 2: SENZA mm nella stessa riga (es: "HIGH 3.2 x 14 IDI" o "HIGH 3.2 x 14\n")
+        // Cerca dimensioni dopo HIGH/MEDIUM/LOW anche senza mm
+        var regexDimensioniSenzaMM = /\b(HIGH|MEDIUM|LOW)\s+(\d[\.,]\d)\s*[xX×]\s*(\d{1,2})\b/gi;
+        while ((matchDimensioni = regexDimensioniSenzaMM.exec(testoCompleto)) !== null) {
+            var tipo = matchDimensioni[1].charAt(0).toUpperCase() + matchDimensioni[1].slice(1).toLowerCase();
+            var diam = matchDimensioni[2].replace(',', '.');
+            var lung = matchDimensioni[3];
+            if (lung === '15') lung = '15.5';
+            
+            // Verifica che siano dimensioni valide
+            if (['2.7', '3.2', '3.7', '4.2', '4.8', '5.5'].indexOf(diam) !== -1 &&
+                ['6', '8', '10', '12', '14', '15.5', '17'].indexOf(lung) !== -1) {
+                
+                // Cerca se esiste già
+                var esisteGia = false;
+                for (var c = 0; c < codiciTrovati.length; c++) {
+                    if (codiciTrovati[c].dimensioni.diametro === diam && 
+                        codiciTrovati[c].dimensioni.lunghezza === lung) {
+                        esisteGia = true;
+                        break;
+                    }
+                }
+                
+                if (!esisteGia) {
+                    console.log("📏 Dimensioni estratte direttamente (senza mm): " + tipo + " " + diam + " x " + lung);
+                    codiciTrovati.push({
+                        codice: 'DIRETTO',
+                        suffisso: tipo === 'High' ? 'H' : (tipo === 'Medium' ? 'M' : 'L'),
+                        dimensioni: { diametro: diam, lunghezza: lung },
+                        posizione: matchDimensioni.index,
+                        tipo: tipo
+                    });
+                }
             }
         }
         
@@ -1505,6 +1658,13 @@ function estraiDatiDaReport(testo) {
     risultato.impianti = risultato.impianti.filter(function(imp) {
         return imp.dente && imp.tipo;
     });
+    
+    // Log prima di impostare i default per debug
+    console.log("🔍 Impianti estratti PRIMA dei default:");
+    for (var d = 0; d < risultato.impianti.length; d++) {
+        var imp = risultato.impianti[d];
+        console.log("   Dente " + imp.dente + ": " + imp.tipo + " Ø" + (imp.diametro || "MANCANTE") + " x " + (imp.lunghezza || "MANCANTE") + "mm");
+    }
     
     // Imposta valori di default se mancanti
     for (var d = 0; d < risultato.impianti.length; d++) {
@@ -3897,7 +4057,7 @@ function mostraSintesiPreparazione() {
         
         // SEZIONE 2: Flusso di lavoro - layout orizzontale multi-colonna
         html += '<div style="border-top:3px solid #333; padding-top:12px; margin-top:5px;">';
-        html += '<div style="font-weight:bold; font-size:18px; color:#333; margin-bottom:12px; text-align:center;">FLUSSO DI LAVORO</div>';
+        html += '<div style="font-weight:bold; font-size:15px; color:#333; margin-bottom:10px; text-align:center;">FLUSSO DI LAVORO</div>';
         
         // Container per le arcate in orizzontale
         html += '<div style="display:flex; gap:40px; justify-content:center;">';
@@ -3928,8 +4088,8 @@ function mostraSintesiPreparazione() {
             var tuttiDiametri = Object.keys(tuttiDiametriMap).map(function(k) { return tuttiDiametriMap[k]; });
             tuttiDiametri.sort(function(a, b) { return a.diametro - b.diametro; });
 
-            var flussoHTML = '<div style="margin-bottom:15px;">' +
-                '<div style="font-weight:bold; font-size:16px; color:' + colore + '; border-bottom:2px solid ' + colore + '; padding-bottom:5px; margin-bottom:10px;">' + nomeArcata + '</div>';
+            var flussoHTML = '<div style="margin-bottom:12px;">' +
+                '<div style="font-weight:bold; font-size:13px; color:' + colore + '; border-bottom:2px solid ' + colore + '; padding-bottom:4px; margin-bottom:8px;">' + nomeArcata + '</div>';
             
             var headPrepItems = [];
             var stepsHTML = []; // Array per raccogliere tutti gli step
@@ -4003,9 +4163,9 @@ function mostraSintesiPreparazione() {
                 
                 var fresaLabel = dInfo.label ? dInfo.label : ('Ø ' + d.toFixed(1));
                 
-                var stepHTML = '<div style="background:' + (stepNum % 2 === 1 ? '#f5f5f5' : '#fff') + '; padding:8px 12px; margin-bottom:6px; border-left:5px solid ' + colore + '; border-radius:4px; flex:1; min-width:200px;">';
-                stepHTML += '<div style="font-weight:bold; font-size:18px; color:#333;">';
-                stepHTML += '<span style="background:' + colore + '; color:white; width:26px; height:26px; border-radius:50%; display:inline-flex; justify-content:center; align-items:center; margin-right:8px; font-size:15px;">' + stepNum + '</span>';
+                var stepHTML = '<div style="background:' + (stepNum % 2 === 1 ? '#f5f5f5' : '#fff') + '; padding:6px 10px; margin-bottom:4px; border-left:4px solid ' + colore + '; border-radius:4px; flex:1; min-width:160px;">';
+                stepHTML += '<div style="font-weight:bold; font-size:14px; color:#333;">';
+                stepHTML += '<span style="background:' + colore + '; color:white; width:20px; height:20px; border-radius:50%; display:inline-flex; justify-content:center; align-items:center; margin-right:6px; font-size:12px;">' + stepNum + '</span>';
                 stepHTML += 'Fresa ' + fresaLabel + '</div>';
                 
                 // Denti per lunghezza - dalla più corta alla più lunga
@@ -4039,13 +4199,13 @@ function mostraSintesiPreparazione() {
                         }
                     }
                     
-                    stepHTML += '<div style="font-size:16px; margin-left:36px; color:#333; margin-top:3px;">• <strong>' + dentiStrArr.join(", ") + '</strong> <span style="color:#1976d2;">(L ' + lenKey + ')</span></div>';
+                    stepHTML += '<div style="font-size:13px; margin-left:28px; color:#333; margin-top:2px;">• <strong>' + dentiStrArr.join(", ") + '</strong> <span style="color:#1976d2;">(L ' + lenKey + ')</span></div>';
                 }
                 
                 // STOP
                 if (dentiCheSiFermano.length > 0) {
                     dentiCheSiFermano = ordinaDentiOdontogramma(dentiCheSiFermano);
-                    stepHTML += '<div style="color:#d32f2f; font-size:15px; font-weight:bold; margin-left:36px; margin-top:4px;">🛑 STOP: ' + dentiCheSiFermano.join(", ") + '</div>';
+                    stepHTML += '<div style="color:#d32f2f; font-size:12px; font-weight:bold; margin-left:28px; margin-top:3px;">🛑 STOP: ' + dentiCheSiFermano.join(", ") + '</div>';
                 }
                 
                 stepHTML += '</div>';
@@ -4089,11 +4249,11 @@ function mostraSintesiPreparazione() {
             
             // Mostra sezione testa
             if (siTestaItems.length > 0 || noTestaItems.length > 0) {
-                flussoHTML += '<div style="background:#fff3cd; padding:8px 12px; border-left:5px solid #ffc107; border-radius:4px; margin-top:8px;">';
+                flussoHTML += '<div style="background:#fff3cd; padding:6px 10px; border-left:4px solid #ffc107; border-radius:4px; margin-top:6px;">';
                 
                 // Sezione Sì Testa
                 if (siTestaItems.length > 0) {
-                    flussoHTML += '<div style="font-weight:bold; font-size:15px; color:#856404;">🟢 Preparazione Testa <button onclick="mostraInfoTesta()" style="cursor:pointer; display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; background:linear-gradient(145deg, #0077cc, #005599); color:white; border-radius:50%; font-size:14px; font-weight:bold; margin-left:8px; border:2px solid #004488; box-shadow:0 3px 6px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.3); font-family:Georgia,serif; font-style:italic;" title="Clicca per informazioni">i</button></div>';
+                    flussoHTML += '<div style="font-weight:bold; font-size:13px; color:#856404;">🟢 Preparazione Testa <button onclick="mostraInfoTesta()" style="cursor:pointer; display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; background:linear-gradient(145deg, #0077cc, #005599); color:white; border-radius:50%; font-size:12px; font-weight:bold; margin-left:6px; border:2px solid #004488; box-shadow:0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.3); font-family:Georgia,serif; font-style:italic;" title="Clicca per informazioni">i</button></div>';
                     var prepTestaStr = [];
                     for (var si = 0; si < siTestaItems.length; si++) {
                         var siItem = siTestaItems[si];
@@ -4103,17 +4263,17 @@ function mostraSintesiPreparazione() {
                             prepTestaStr.push('<strong>' + siItem.dente + '</strong>: a discrezione ' + siItem.prep);
                         }
                     }
-                    flussoHTML += '<div style="font-size:14px; margin-left:12px; margin-top:2px;">' + prepTestaStr.join(' | ') + '</div>';
+                    flussoHTML += '<div style="font-size:12px; margin-left:10px; margin-top:2px;">' + prepTestaStr.join(' | ') + '</div>';
                 }
                 
                 // Sezione No Testa
                 if (noTestaItems.length > 0) {
-                    flussoHTML += '<div style="font-weight:bold; font-size:15px; color:#d32f2f; margin-top:8px;">❌ No Preparazione Testa</div>';
+                    flussoHTML += '<div style="font-weight:bold; font-size:13px; color:#d32f2f; margin-top:6px;">❌ No Preparazione Testa</div>';
                     var noTestaStr = [];
                     for (var ni = 0; ni < noTestaItems.length; ni++) {
-                        noTestaStr.push('<strong>' + noTestaItems[ni].dente + '</strong> <span style="font-size:12px;">(' + noTestaItems[ni].motivo + ')</span>');
+                        noTestaStr.push('<strong>' + noTestaItems[ni].dente + '</strong> <span style="font-size:10px;">(' + noTestaItems[ni].motivo + ')</span>');
                     }
-                    flussoHTML += '<div style="font-size:14px; margin-left:12px; margin-top:2px; color:#666;">' + noTestaStr.join(' | ') + '</div>';
+                    flussoHTML += '<div style="font-size:12px; margin-left:10px; margin-top:2px; color:#666;">' + noTestaStr.join(' | ') + '</div>';
                 }
                 
                 flussoHTML += '</div>';
